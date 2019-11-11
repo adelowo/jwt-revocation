@@ -27,7 +27,7 @@ func main() {
 		dsn = "localhost:6379"
 	}
 
-	redis,err := NewRediClient(dsn)
+	redis, err := NewRediClient(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func main() {
 
 	mux.HandleFunc("/login", login(s, signingSecret))
 
-	auth := requireAuth(s,redis,signingSecret)
+	auth := requireAuth(s, redis, signingSecret)
 
 	//mux.HandleFunc("/logout", nil)
 
@@ -69,7 +69,7 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			encode(w,apiGenericResponse{
+			encode(w, apiGenericResponse{
 				Message:   "Invalid request body ",
 				Status:    false,
 				Timestamp: time.Now().Unix(),
@@ -79,7 +79,7 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 
 		if u.FullName == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			encode(w,apiGenericResponse{
+			encode(w, apiGenericResponse{
 				Message:   "Please provide your name",
 				Status:    false,
 				Timestamp: time.Now().Unix(),
@@ -89,7 +89,7 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 
 		if u.Email == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			encode(w,apiGenericResponse{
+			encode(w, apiGenericResponse{
 				Message:   "Please provide your email",
 				Status:    false,
 				Timestamp: time.Now().Unix(),
@@ -100,10 +100,10 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 		// no errors
 		_ = s.Save(u)
 
-		token, err := GenerateJWT(signingSecret,u)
+		token, err := GenerateJWT(signingSecret, u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			encode(w,apiGenericResponse{
+			encode(w, apiGenericResponse{
 				Message:   "Could not generate JWT",
 				Status:    false,
 				Timestamp: time.Now().Unix(),
@@ -112,7 +112,7 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 		}
 
 		w.Header().Set("X-JWT-APP", token)
-		encode(w,apiGenericResponse{
+		encode(w, apiGenericResponse{
 			Message:   "You have been logged in successfully",
 			Status:    true,
 			Timestamp: time.Now().Unix(),
@@ -121,5 +121,5 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 }
 
 func userProfile(w http.ResponseWriter, r *http.Request) {
-	encode(w,r.Context().Value(userContextID))
+	encode(w, r.Context().Value(userContextID))
 }

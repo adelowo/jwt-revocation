@@ -1,10 +1,9 @@
 package main
 
-
 import (
-"errors"
+	"errors"
 
-"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v7"
 )
 
 type Client struct {
