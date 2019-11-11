@@ -1,12 +1,15 @@
 package main
 
 import (
-	"errors"
 	"sync"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type User struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	FullName string `json:"full_name"`
 }
 
@@ -16,22 +19,30 @@ type store struct {
 	data map[string]User
 }
 
-func (s *store) Get(email string) (User, error) {
+func (s *store) Save(u User) error {
 	s.RLock()
-	defer s.RUnlock()
 
-	user,ok := s.data[email]
-	if !ok {
-		return User{}, errors.New("user not found")
+	_, ok := s.data[u.Email]
+	s.RUnlock()
+	if ok {
+		return nil
 	}
 
-	return user,nil
+	s.Lock()
+	s.data[u.Email] = u
+	s.Unlock()
+	return nil
 }
 
-func (s *store) Save(u User) error {
-	s.Lock()
-	defer s.Unlock()
+func GenerateJWT(signingSecret string, u User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"foo":   "bar",
+		"nbf":   time.Now().Add(-1 * time.Second),
+		"jti":   uuid.New().String(),
+		"email": u.Email,
+		"iss":   "JWT-revocation-app",
+		"exp":   time.Now().Add(time.Hour * 168),
+	})
 
-	s.data[u.Email] = u
-	return nil
+	return token.SignedString([]byte(signingSecret))
 }
