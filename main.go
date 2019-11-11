@@ -22,6 +22,16 @@ func main() {
 		log.Fatal("JWT_SIGNING_SECRET not found in environment")
 	}
 
+	dsn := os.Getenv("REDIS_DSN")
+	if len(dsn) == 0 {
+		dsn = "localhost:6379"
+	}
+
+	redis,err := NewRediClient(dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mux := http.NewServeMux()
 
 	s := &store{
@@ -30,9 +40,12 @@ func main() {
 	}
 
 	mux.HandleFunc("/login", login(s, signingSecret))
+
+	auth := requireAuth(s,redis,signingSecret)
+
 	//mux.HandleFunc("/logout", nil)
-	//
-	//mux.HandleFunc("/user/profile", nil)
+
+	mux.HandleFunc("/user/profile", auth(userProfile))
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux); err != nil {
 		log.Fatal(err)
@@ -105,4 +118,8 @@ func login(s *store, signingSecret string) http.HandlerFunc {
 			Timestamp: time.Now().Unix(),
 		})
 	}
+}
+
+func userProfile(w http.ResponseWriter, r *http.Request) {
+	encode(w,r.Context().Value(userContextID))
 }
