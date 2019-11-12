@@ -43,7 +43,7 @@ func main() {
 
 	auth := requireAuth(s, redis, signingSecret)
 
-	//mux.HandleFunc("/logout", nil)
+	mux.HandleFunc("/user/logout", auth(logoutHandler(redis)))
 
 	mux.HandleFunc("/user/profile", auth(userProfile))
 

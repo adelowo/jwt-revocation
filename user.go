@@ -137,3 +137,26 @@ func requireAuth(store *store, redis *Client, signingSecret string) func(next ht
 		}
 	}
 }
+
+func logoutHandler(redis *Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		jti := r.Context().Value(jtiContextID).(string)
+
+		if err := redis.AddToBlacklist(jti); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			encode(w,apiGenericResponse{
+				Message:   "Could not log you out",
+				Status:    false,
+				Timestamp: time.Now().Unix(),
+			})
+			return
+		}
+
+		encode(w,apiGenericResponse{
+			Message:   "You have been successfully logged out",
+			Status:    true,
+			Timestamp: time.Now().Unix(),
+		})
+	}
+}
